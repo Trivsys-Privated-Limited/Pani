@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reserve a Water Tanker | Pani, DHA Karachi</title>
+  <meta name="description" content="Book a 3,000 or 6,000 gallon water tanker in DHA Karachi in under a minute.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5s10 10.4 10 17.5a10 10 0 1 1-20 0C6 12.9 16 2.5 16 2.5Z' fill='%230b5fa5'/%3E%3C/svg%3E">
+  <script>(function(){var t;try{t=localStorage.getItem('pani.theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}var d=document.documentElement;d.setAttribute('data-theme',t);d.classList.add('js')})()</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@500&text=%D9%BE%D8%A7%D9%86%DB%8C&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/style.css?v=18">
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav">
+    <a href="/" class="logo" data-logo aria-label="Pani home"></a>
+    <div class="nav-cta">
+      <a class="btn btn-light btn-sm" style="display:inline-flex" data-wa href="#"><span class="wa-ic" data-icon="wa"></span>Help</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-hero" style="padding-bottom:20px">
+  <div class="container book-wrap">
+    <span class="eyebrow">Reservation</span>
+    <h1 style="font-size:clamp(2rem,5vw,3rem)">Almost done</h1>
+    <p>Your details and the payment screenshot, and your tanker is reserved.</p>
+  </div>
+</div>
+
+<main class="page" style="padding-top:0">
+  <div class="container book-wrap">
+    <form id="form" class="bform" novalidate>
+      <div id="wizard">
+
+        <!-- Order: a short summary when it came filled in from the home page, fields otherwise -->
+        <fieldset class="fs">
+          <legend>Your order</legend>
+          <div class="order-view" id="order-view" hidden>
+            <div class="lines" id="order-lines"></div>
+            <button type="button" class="textbtn" id="order-change">Change</button>
+          </div>
+          <div class="order-edit" id="order-edit">
+            <div class="seg" role="radiogroup" aria-label="Tanker size" data-f="size">
+              <label><input type="radio" name="size" value="3000"><span><b>3,000 gallons</b><small data-price="3000">Rs 12,500</small></span></label>
+              <label><input type="radio" name="size" value="6000"><span><b>6,000 gallons</b><small data-price="6000">Rs 22,000</small></span></label>
+            </div>
+            <div class="field" data-f="size" style="margin:-8px 0 0"><span class="msg"></span></div>
+            <div class="qgrid">
+              <div class="field" data-f="date"><label for="date">Date</label><select class="input" id="date"><option value="">Loading…</option></select><span class="msg"></span></div>
+              <div class="field" data-f="slot"><label for="slot">Time</label><select class="input" id="slot" disabled><option value="">Pick a date</option></select><span class="msg"></span></div>
+            </div>
+            <div class="field" data-f="phase"><label for="phase">DHA phase</label><select class="input" id="phase"><option value="">Select your phase</option></select><span class="msg"></span></div>
+            <div class="slide" id="addr-slide"><div><div class="field" data-f="address"><label for="address">House address</label><input class="input" id="address" autocomplete="street-address" placeholder="House 24, Street 7, Khayaban-e-Shamsheer"><span class="msg"></span></div></div></div>
+            <div class="qfoot" style="padding:0">
+              <div class="qty"><span class="qlabel">Tankers</span>
+                <div class="stepper"><button type="button" id="minus" aria-label="Fewer tankers">−</button><output id="qty">1</output><button type="button" id="plus" aria-label="More tankers">+</button></div>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="fs">
+          <legend>Your details</legend>
+          <div class="row2">
+            <div class="field" data-f="name"><label for="name">Name</label><input class="input" id="name" autocomplete="name" placeholder="Ahmed Khan"><span class="msg"></span></div>
+            <div class="field" data-f="phone"><label for="phone">Mobile</label><input class="input" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0300 1234567"><span class="msg"></span></div>
+          </div>
+          <button type="button" class="textbtn" id="more-toggle" style="margin-top:-6px">Add a landmark or a note for the driver</button>
+          <div class="slide" id="more"><div><div class="row2" style="padding-top:10px">
+            <div class="field"><label for="landmark">Landmark</label><input class="input" id="landmark" placeholder="Near Rahat Park"></div>
+            <div class="field"><label for="notes">Note for the driver</label><input class="input" id="notes" placeholder="Tank is at the back gate"></div>
+          </div></div></div>
+        </fieldset>
+
+        <fieldset class="fs">
+          <legend>Payment</legend>
+          <div class="paybox"><span>Transfer this amount</span><b id="pay-total">Rs 0</b></div>
+          <div class="bank" id="bank"></div>
+          <div class="field" data-f="receipt" style="margin:16px 0 0">
+            <label for="receipt">Payment screenshot</label>
+            <div class="drop" id="drop">
+              <input type="file" id="receipt" accept="image/*,application/pdf">
+              <div id="drop-empty" style="display:grid;place-items:center;gap:4px">
+                <b style="font-weight:500">Tap to attach screenshot</b>
+                <small>Photo or PDF, up to 8 MB</small>
+              </div>
+              <div class="preview" id="drop-full" style="display:none"></div>
+            </div>
+            <span class="msg"></span>
+          </div>
+        </fieldset>
+
+        <div class="submit-row">
+          <div class="tot"><small id="foot-sub">Total</small><b id="foot-total">Rs 0</b></div>
+          <button type="submit" class="btn btn-primary" id="next">Confirm</button>
+        </div>
+        <p class="drop-err" id="err-server"></p>
+        <div class="alt-wa">Prefer to chat? <a href="#" id="wa-alt">Reserve on WhatsApp</a></div>
+      </div>
+
+      <!-- Success -->
+      <div id="done" class="success" style="display:none;padding-top:32px">
+        <div class="check" data-icon="check"></div>
+        <h1 style="font-size:clamp(2rem,5vw,2.6rem)">Reservation received</h1>
+        <p class="muted" style="max-width:440px;margin:12px auto 0">We're verifying your payment now. You'll get a confirmation on WhatsApp shortly.</p>
+        <div class="code-pill"><span class="muted" style="font-weight:400">Booking</span><span id="done-code"></span></div>
+        <div class="summary" id="done-summary"></div>
+        <div class="actions">
+          <a class="btn btn-wa btn-block" id="done-wa" target="_blank" rel="noopener"><span data-icon="wa"></span>Send booking on WhatsApp</a>
+          <a class="btn btn-light btn-block" id="done-track" href="/track">Track this booking</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script src="/assets/app.js?v=18"></script>
+<script>
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const params = new URLSearchParams(location.search);
+  const state = { slots: {}, file: null, qty: 1 };
+  let cfg;
+
+  const size = () => +(($('input[name=size]:checked') || {}).value || 0);
+  const total = () => (cfg && size() ? cfg.prices[size()] : 0) * state.qty;
+  const slide = (el, on) => el.classList.toggle('open', !!on);
+
+  Pani.config().then(async (c) => {
+    cfg = c;
+    $('#phase').innerHTML = '<option value="">Select your phase</option>' + c.phases.map((p) => `<option>${esc(p)}</option>`).join('');
+    renderBank();
+    // Saved details from a previous booking, then whatever the home page form passed in
+    try {
+      const saved = JSON.parse(localStorage.getItem('pani.contact') || '{}');
+      ['name', 'phone', 'phase', 'address', 'landmark'].forEach((k) => { if (saved[k]) $('#' + k).value = saved[k]; });
+    } catch (_) {}
+    const ps = params.get('size'); if (ps && c.prices[ps]) $(`input[name=size][value="${ps}"]`).checked = true;
+    if (/^[1-5]$/.test(params.get('qty') || '')) state.qty = +params.get('qty');
+    if (params.get('phase') && c.phases.includes(params.get('phase'))) $('#phase').value = params.get('phase');
+    if (params.get('address')) $('#address').value = params.get('address');
+    slide($('#addr-slide'), $('#phase').value);
+    if ($('#landmark').value) slide($('#more'), true);
+    update();
+    await buildDates();
+    // Everything already chosen and still available? Show the short summary instead of the fields.
+    if (size() && $('#date').value && $('#slot').value && $('#phase').value && $('#address').value.trim().length >= 5) setOrderView(true);
+  });
+
+  function setOrderView(on) {
+    $('#order-view').hidden = !on; $('#order-edit').hidden = on;
+    if (on) {
+      $('#order-lines').innerHTML =
+        `<b>${size().toLocaleString()} gallons × ${state.qty}</b>` +
+        `<span>${Pani.dateLabel($('#date').value, { weekday: 'long', day: 'numeric', month: 'long' })}, ${Pani.slotLabel($('#slot').value)}</span>` +
+        `<span>${esc($('#address').value)}, ${esc($('#phase').value)}</span>`;
+    }
+  }
+  $('#order-change').onclick = () => { setOrderView(false); $('#order-edit').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+
+  /* ---------- Size and quantity ---------- */
+  $$('input[name=size]').forEach((r) => r.addEventListener('change', () => { setErr('size', ''); update(); }));
+  const setQty = (n) => { state.qty = Math.max(1, Math.min(5, n)); update(); };
+  $('#minus').onclick = () => setQty(state.qty - 1);
+  $('#plus').onclick = () => setQty(state.qty + 1);
+
+  /* ---------- Dates and windows ---------- */
+  async function loadDay(d) {
+    if (state.slots[d]) return state.slots[d];
+    const r = await fetch('/api/availability?date=' + d).then((x) => x.json());
+    return (state.slots[d] = r.slots);
+  }
+  async function buildDates() {
+    const days = Math.min(cfg.maxDaysAhead, 14);
+    const list = Array.from({ length: days + 1 }, (_, i) => Pani.addDays(cfg.today, i));
+    await Promise.all(list.map(loadDay));
+    $('#date').innerHTML = '<option value="">Select date</option>' + list.map((d, i) => {
+      const open = state.slots[d].some((s) => s.available);
+      const name = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : Pani.dateLabel(d, { weekday: 'short', day: 'numeric', month: 'short' });
+      return `<option value="${d}" ${open ? '' : 'disabled'}>${name}${open ? '' : ' (full)'}</option>`;
+    }).join('');
+    const want = params.get('date');
+    const ok = (d) => state.slots[d] && state.slots[d].some((s) => s.available);
+    const pick = want && ok(want) ? want : list.find(ok);
+    if (pick) { $('#date').value = pick; fillSlots(pick, params.get('slot')); }
+  }
+  function fillSlots(d, want) {
+    const sel = $('#slot'), slots = state.slots[d] || [];
+    sel.disabled = false;
+    sel.innerHTML = '<option value="">Select time</option>' + slots.map((s) => {
+      const why = s.reason === 'full' ? ' (full)' : s.reason === 'cutoff' ? ' (closed)' : s.reason === 'too_far' ? ' (not open yet)' : (s.left <= 1 ? ' (last one)' : '');
+      return `<option value="${s.slot}" ${s.available ? '' : 'disabled'}>${Pani.slotLabel(s.slot)}${why}</option>`;
+    }).join('');
+    const pick = want && slots.some((s) => s.slot === want && s.available) ? want : (slots.find((s) => s.available) || {}).slot;
+    if (pick) sel.value = pick;
+    update();
+  }
+  $('#date').addEventListener('change', async () => {
+    setErr('date', '');
+    const d = $('#date').value;
+    if (!d) { $('#slot').disabled = true; update(); return; }
+    delete state.slots[d];
+    $('#slot').innerHTML = '<option value="">Loading…</option>';
+    await loadDay(d); fillSlots(d);
+  });
+  $('#phase').addEventListener('change', () => { slide($('#addr-slide'), $('#phase').value); if ($('#phase').value && !$('#address').value) setTimeout(() => $('#address').focus({ preventScroll: true }), 250); });
+  $('#more-toggle').onclick = () => { const m = $('#more'); slide(m, !m.classList.contains('open')); if (m.classList.contains('open')) setTimeout(() => $('#landmark').focus({ preventScroll: true }), 250); };
+
+  /* ---------- Payment ---------- */
+  function renderBank() {
+    const b = cfg.bank;
+    const rows = [['Bank', b.bankName], ['Account title', b.accountTitle], ['Account number', b.accountNumber], ['IBAN', b.iban]].filter((r) => r[1]);
+    $('#bank').innerHTML = rows.map(([k, v]) => `<div class="bank-row"><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div>${k === 'Bank' || k === 'Account title' ? '' : `<button type="button" class="copy" data-copy="${esc(v)}">Copy</button>`}</div>`).join('') +
+      (b.extra ? `<div class="bank-row"><div class="muted" style="font-size:.88rem">${esc(b.extra)}</div></div>` : '');
+    $$('#bank .copy').forEach((btn) => btn.onclick = () => Pani.copy(btn.dataset.copy.replace(/\s/g, ''), btn));
+  }
+  const drop = $('#drop'), file = $('#receipt');
+  ['dragenter', 'dragover'].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach((e) => drop.addEventListener(e, () => drop.classList.remove('drag')));
+  file.addEventListener('change', () => setFile(file.files[0]));
+  function setFile(f) {
+    setErr('receipt', '');
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { setErr('receipt', 'That file is over 8 MB. Please attach a smaller screenshot.'); file.value = ''; return; }
+    state.file = f;
+    const isImg = f.type.startsWith('image/');
+    $('#drop-empty').style.display = 'none';
+    const full = $('#drop-full'); full.style.display = 'flex';
+    full.innerHTML = (isImg ? '<img alt="">' : '<div class="pdf">PDF</div>') + `<div style="flex:1;min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${esc(f.name)}</b><small style="color:var(--green)">Attached. Tap to change.</small></div>`;
+    if (isImg) full.querySelector('img').src = URL.createObjectURL(f);
+    drop.classList.add('has');
+  }
+
+  /* ---------- Live totals ---------- */
+  function update() {
+    if (!cfg) return;
+    $('#qty').textContent = state.qty;
+    $('#minus').disabled = state.qty <= 1; $('#plus').disabled = state.qty >= 5;
+    const t = Pani.money(total());
+    $('#foot-total').textContent = t; $('#pay-total').textContent = t;
+    $('#foot-sub').textContent = size() ? `${size().toLocaleString()} gal × ${state.qty}` : 'Total';
+    const waText = `Hi ${cfg.business.name}, I'd like to book a water tanker.` +
+      (size() ? `\nTanker: ${size()} gallons x ${state.qty}` : '') +
+      ($('#slot').value ? `\nDate: ${Pani.dateLabel($('#date').value)}\nTime: ${Pani.slotLabel($('#slot').value)}` : '') +
+      ($('#phase').value ? `\nArea: ${$('#phase').value}` : '') + ($('#address').value ? `\nAddress: ${$('#address').value}` : '') +
+      ($('#name').value ? `\nName: ${$('#name').value}` : '');
+    $('#wa-alt').href = Pani.waLink(cfg.business.whatsapp, waText); $('#wa-alt').target = '_blank';
+  }
+  $$('#form .input').forEach((i) => i.addEventListener(i.tagName === 'SELECT' ? 'change' : 'input', () => { const f = i.closest('.field'); f && f.classList.remove('err'); update(); }));
+
+  /* ---------- Validation and submit ---------- */
+  function setErr(f, msg) {
+    const el = $(`.field[data-f="${f}"]`); if (!el) return !msg;
+    el.classList.toggle('err', !!msg); const m = el.querySelector('.msg'); if (m) { m.textContent = msg || ''; }
+    return !msg;
+  }
+  function validate() {
+    const phone = $('#phone').value.replace(/\D/g, '').replace(/^92/, '0');
+    let ok = true, orderOk = true;
+    orderOk = setErr('size', size() ? '' : 'Please choose a tanker size') && orderOk;
+    orderOk = setErr('date', $('#date').value ? '' : 'Please choose a date') && orderOk;
+    orderOk = setErr('slot', $('#slot').value ? '' : 'Please choose a time') && orderOk;
+    orderOk = setErr('phase', $('#phase').value ? '' : 'Please choose your DHA phase') && orderOk;
+    if ($('#phase').value) orderOk = setErr('address', $('#address').value.trim().length < 5 ? 'Please enter your house address' : '') && orderOk;
+    if (!orderOk) setOrderView(false);
+    ok = orderOk;
+    ok = setErr('name', $('#name').value.trim().length < 2 ? 'Please enter your name' : '') && ok;
+    ok = setErr('phone', /^0?3\d{9}$/.test(phone) ? '' : 'Enter a valid mobile, e.g. 0300 1234567') && ok;
+    ok = setErr('receipt', state.file ? '' : 'Please attach your payment screenshot') && ok;
+    if (!ok) { const f = $('.field.err'); f && f.scrollIntoView({ behavior: 'smooth', block: 'center' }); const i = f && f.querySelector('.input'); i && setTimeout(() => i.focus({ preventScroll: true }), 300); }
+    return ok;
+  }
+
+  $('#form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('#err-server').classList.remove('show');
+    if (!validate()) return;
+    try { localStorage.setItem('pani.contact', JSON.stringify(Object.fromEntries(['name', 'phone', 'phase', 'address', 'landmark'].map((k) => [k, $('#' + k).value])))); } catch (_) {}
+    const btn = $('#next'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Sending';
+    const fd = new FormData();
+    fd.append('size', size()); fd.append('qty', state.qty); fd.append('delivery_date', $('#date').value); fd.append('slot', $('#slot').value);
+    ['name', 'phone', 'phase', 'address', 'landmark', 'notes'].forEach((k) => fd.append(k, $('#' + k).value));
+    fd.append('receipt', state.file);
+    try {
+      const res = await fetch('/api/orders', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        const f = data.fields || {};
+        if (f.slot || f.qty || f.delivery_date || f.size || f.phase || f.address) setOrderView(false);
+        if (f.slot || f.qty) { const d = $('#date').value; delete state.slots[d]; await loadDay(d); fillSlots(d); setErr('slot', f.slot || f.qty); }
+        Object.entries(f).forEach(([k, v]) => { if (k === 'delivery_date') setErr('date', v); else if (k !== 'slot' && k !== 'qty') setErr(k, v); });
+        if (!Object.keys(f).length) { $('#err-server').textContent = data.error || 'Something went wrong. Please try again or WhatsApp us.'; $('#err-server').classList.add('show'); }
+        const first = $('.field.err'); first && first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      showDone(data);
+    } catch (_) {
+      $('#err-server').textContent = 'No connection. Please check your internet and try again.'; $('#err-server').classList.add('show');
+    } finally { btn.disabled = false; btn.innerHTML = 'Confirm'; }
+  });
+
+  function showDone(d) {
+    const rows = [
+      ['Tanker', `${size().toLocaleString()} gallons × ${state.qty}`],
+      ['Delivery', `${Pani.dateLabel($('#date').value, { weekday: 'long', day: 'numeric', month: 'long' })}, ${Pani.slotLabel($('#slot').value)}`],
+      ['Address', `${$('#address').value}, ${$('#phase').value}`],
+    ];
+    $('#done-summary').innerHTML = rows.map(([k, v]) => `<div class="line"><span>${k}</span><span>${esc(v)}</span></div>`).join('') + `<div class="line total"><span>Total</span><span>${Pani.money(total())}</span></div>`;
+    $('#wizard').style.display = 'none'; $('#done').style.display = 'block';
+    $('.page-hero').style.display = 'none';
+    $('#done-code').textContent = d.code;
+    const msg = `Hi ${cfg.business.name}, I've booked a tanker on your website.\nBooking: ${d.code}\nTanker: ${size()} gallons x ${state.qty}\nDate: ${Pani.dateLabel($('#date').value)}\nTime: ${Pani.slotLabel($('#slot').value)}\nAddress: ${$('#address').value}, ${$('#phase').value}\nName: ${$('#name').value}\nTotal: ${Pani.money(total())}\nPayment screenshot uploaded.`;
+    $('#done-wa').href = Pani.waLink(cfg.business.whatsapp, msg);
+    $('#done-track').href = `/track?code=${encodeURIComponent(d.code)}&phone=${encodeURIComponent($('#phone').value)}`;
+    window.scrollTo({ top: 0 });
+  }
+})();
+</script>
+</body>
+</html>

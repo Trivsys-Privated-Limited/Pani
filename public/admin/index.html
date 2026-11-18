@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pani Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#f6f8fb">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5s10 10.4 10 17.5a10 10 0 1 1-20 0C6 12.9 16 2.5 16 2.5Z' fill='%230b5fa5'/%3E%3C/svg%3E">
+  <script>document.documentElement.classList.add('js')</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@500&text=%D9%BE%D8%A7%D9%86%DB%8C&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/style.css?v=18">
+  <link rel="stylesheet" href="/admin/admin.css?v=18">
+</head>
+<body class="admin">
+
+<div id="login-view" class="login-wrap" style="display:none">
+  <form class="login" id="login-form">
+    <div class="logo" data-logo></div>
+    <h1>Admin sign in</h1>
+    <p class="muted" style="margin-bottom:22px">Manage bookings, payments and settings.</p>
+    <div class="field"><label for="u">Username</label><input class="input" id="u" autocomplete="username" required></div>
+    <div class="field"><label for="p">Password</label><input class="input" id="p" type="password" autocomplete="current-password" required></div>
+    <button class="btn btn-primary btn-block">Sign in</button>
+    <p class="drop-err" id="login-err"></p>
+  </form>
+</div>
+
+<div id="app" class="shell" style="display:none">
+  <aside class="side">
+    <a href="/" class="logo" data-logo target="_blank"></a>
+    <a class="nav-i" href="#/" data-r="dash"><span data-ic="home"></span>Dashboard</a>
+    <a class="nav-i" href="#/orders" data-r="orders"><span data-ic="list"></span>Orders <span class="badge" data-badge style="display:none"></span></a>
+    <a class="nav-i" href="#/schedule" data-r="schedule"><span data-ic="cal"></span>Schedule</a>
+    <a class="nav-i" href="#/new" data-r="new"><span data-ic="plus"></span>New order</a>
+    <a class="nav-i" href="#/settings" data-r="settings"><span data-ic="cog"></span>Settings</a>
+    <div class="bottom">
+      <a class="nav-i" href="/" target="_blank"><span data-ic="ext"></span>View website</a>
+      <a class="nav-i" href="#" id="logout"><span data-ic="out"></span>Sign out</a>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px"><span class="logo logo-m" data-logo style="font-size:1.2rem"></span><h1 id="title">Dashboard</h1></div>
+      <div id="top-actions"></div>
+    </div>
+    <div class="content" id="view"></div>
+  </div>
+  <nav class="tabbar">
+    <a href="#/" data-r="dash"><span data-ic="home"></span>Home</a>
+    <a href="#/orders" data-r="orders"><span data-ic="list"></span>Orders<span class="badge" data-badge style="display:none"></span></a>
+    <a href="#/schedule" data-r="schedule"><span data-ic="cal"></span>Schedule</a>
+    <a href="#/new" data-r="new"><span data-ic="plus"></span>New</a>
+    <a href="#/settings" data-r="settings"><span data-ic="cog"></span>Settings</a>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-modal="true" role="dialog"></aside>
+<div class="lightbox" id="lightbox"><img alt=""></div>
+
+<script src="/assets/app.js?v=18"></script>
+<script>
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const money = Pani.money;
+  const IC = {
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+    cal: Pani.ICON.cal,
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+    cog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>',
+    ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+    out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+  };
+  $$('[data-ic]').forEach((e) => e.innerHTML = IC[e.dataset.ic]);
+
+  let CFG = null; // full settings
+  const STATUS = ['pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'];
+
+  async function api(url, opts = {}) {
+    const o = { credentials: 'same-origin', ...opts };
+    if (o.body && typeof o.body !== 'string' && !(o.body instanceof FormData)) { o.body = JSON.stringify(o.body); o.headers = { 'Content-Type': 'application/json' }; }
+    const r = await fetch(url, o);
+    if (r.status === 401 && !url.endsWith('/login')) { showLogin(); throw new Error('auth'); }
+    const ct = r.headers.get('content-type') || '';
+    const d = ct.includes('json') ? await r.json() : await r.text();
+    if (!r.ok) { const e = new Error(d.error || 'Request failed'); e.data = d; throw e; }
+    return d;
+  }
+
+  /* ---------- Auth ---------- */
+  function showLogin() { $('#app').style.display = 'none'; $('#login-view').style.display = 'grid'; setTimeout(() => $('#u').focus(), 50); }
+  async function showApp() {
+    $('#login-view').style.display = 'none'; $('#app').style.display = 'grid';
+    CFG = await api('/admin/api/settings');
+    route();
+  }
+  $('#login-form').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('#login-err').classList.remove('show');
+    try { await api('/admin/api/login', { method: 'POST', body: { username: $('#u').value, password: $('#p').value } }); $('#p').value = ''; showApp(); }
+    catch (err) { $('#login-err').textContent = err.message; $('#login-err').classList.add('show'); }
+  });
+  $('#logout').onclick = async (e) => { e.preventDefault(); await api('/admin/api/logout', { method: 'POST' }); showLogin(); };
+
+  /* ---------- Helpers ---------- */
+  const pill = (s) => `<span class="pill p-${s}">${s === 'submitted' ? 'To verify' : s}</span>`;
+  const dLabel = (d) => Pani.dateLabel(d, { weekday: 'short', day: 'numeric', month: 'short' });
+  const today = () => { const t = new Date(Date.now() + 5 * 3600e3); return t.toISOString().slice(0, 10); };
+  const relDay = (d) => d === today() ? 'Today' : d === Pani.addDays(today(), 1) ? 'Tomorrow' : dLabel(d);
+  const waNum = (p) => '92' + String(p).replace(/\D/g, '').replace(/^0/, '');
+
+  function orderRow(o, wide) {
+    return `<div class="orow ${wide ? 'wide' : ''}" data-id="${o.id}">
+      ${wide ? `<div class="m" style="font-weight:700;color:var(--ink)">${esc(o.code)}</div>` : ''}
+      <div><div class="t">${esc(o.name)} ${wide ? '' : `<span class="m" style="font-weight:600">${esc(o.code)}</span>`}</div><div class="m">${esc(o.phase)} · ${Number(o.size).toLocaleString()} gal × ${o.qty}</div></div>
+      <div class="r"><div class="amt">${money(o.total)}</div><div class="m">${relDay(o.delivery_date)}, ${Pani.slotLabel(o.slot)}</div></div>
+      ${wide ? `<div>${pill(o.payment_status)}</div><div>${pill(o.status)}</div><div class="m">${esc(o.phone)}</div>` : `<div style="display:flex;gap:6px;flex-wrap:wrap">${pill(o.payment_status)}${pill(o.status)}</div>`}
+    </div>`;
+  }
+  function bindRows(root) { $$('.orow, .mini', root).forEach((r) => r.onclick = () => openOrder(r.dataset.id)); }
+
+  async function refreshBadge() {
+    try {
+      const s = await api('/admin/api/stats');
+      $$('[data-badge]').forEach((b) => { b.textContent = s.toVerify; b.style.display = s.toVerify ? '' : 'none'; });
+      return s;
+    } catch (_) {}
+  }
+
+  /* ---------- Router ---------- */
+  const routes = { dash, orders, schedule, neworder, settings };
+  function route() {
+    const h = location.hash.replace(/^#\/?/, '');
+    const [name, q] = h.split('?');
+    const key = { '': 'dash', orders: 'orders', schedule: 'schedule', new: 'new', settings: 'settings' }[name] || 'dash';
+    $$('[data-r]').forEach((a) => a.classList.toggle('on', a.dataset.r === key));
+    $('#top-actions').innerHTML = '';
+    (key === 'new' ? neworder : routes[key])(new URLSearchParams(q || ''));
+    refreshBadge();
+  }
+  window.addEventListener('hashchange', () => { if ($('#app').style.display !== 'none') route(); });
+
+  /* ---------- Dashboard ---------- */
+  async function dash() {
+    $('#title').textContent = 'Dashboard';
+    $('#top-actions').innerHTML = `<a class="btn btn-primary btn-sm" href="#/new">+ New order</a>`;
+    const v = $('#view'); v.innerHTML = '<div class="skeleton" style="height:120px"></div>';
+    const [s, verify, todays, tomorrows] = await Promise.all([
+      api('/admin/api/stats'),
+      api('/admin/api/orders?payment=submitted&sort=created'),
+      api(`/admin/api/orders?from=${today()}&to=${today()}`),
+      api(`/admin/api/orders?from=${Pani.addDays(today(), 1)}&to=${Pani.addDays(today(), 1)}`),
+    ]);
+    const act = (l) => l.filter((o) => o.status !== 'cancelled');
+    v.innerHTML = `
+      <div class="stats">
+        <div class="stat hl"><div class="k">Today's deliveries</div><div class="v">${s.deliveriesToday.t}</div><div class="s">${s.deliveriesToday.n} bookings</div></div>
+        <div class="stat"><div class="k">Tomorrow</div><div class="v">${s.deliveriesTomorrow.t}</div><div class="s">${s.deliveriesTomorrow.n} bookings</div></div>
+        <div class="stat ${s.toVerify ? 'warn' : ''}"><div class="k">Payments to verify</div><div class="v">${s.toVerify}</div><div class="s">screenshots waiting</div></div>
+        <div class="stat"><div class="k">This month</div><div class="v">${money(s.monthRevenue).replace('Rs ', 'Rs ')}</div><div class="s">${s.monthOrders} orders · ${s.deliveredMonth} delivered</div></div>
+      </div>
+      <div class="box">
+        <div class="box-h"><h2>Verify payments</h2><a class="muted" href="#/orders?payment=submitted" style="font-weight:600;font-size:.9rem">See all</a></div>
+        ${verify.length ? verify.filter((o) => o.status !== 'cancelled').slice(0, 6).map((o) => orderRow(o)).join('') : '<div class="empty">All payments are verified. Nice.</div>'}
+      </div>
+      <div class="grid2">
+        <div class="box"><div class="box-h"><h2>Today · ${dLabel(today())}</h2><span class="muted">${act(todays).length}</span></div>${act(todays).length ? act(todays).map((o) => orderRow(o)).join('') : '<div class="empty">No deliveries today.</div>'}</div>
+        <div class="box"><div class="box-h"><h2>Tomorrow · ${dLabel(Pani.addDays(today(), 1))}</h2><span class="muted">${act(tomorrows).length}</span></div>${act(tomorrows).length ? act(tomorrows).map((o) => orderRow(o)).join('') : '<div class="empty">No deliveries tomorrow yet.</div>'}</div>
+      </div>`;
+    bindRows(v);
+  }
+
+  /* ---------- Orders ---------- */
+  const of = { status: 'all', payment: 'all', q: '', from: '', to: '', size: 'all' };
+  async function orders(qs) {
+    $('#title').textContent = 'Orders';
+    if (qs.get('payment')) of.payment = qs.get('payment');
+    $('#top-actions').innerHTML = `<a class="btn btn-light btn-sm" id="csv" href="#">Export CSV</a>`;
+    const v = $('#view');
+    v.innerHTML = `
+      <div class="filters">
+        <div class="seg" id="seg-status">${['all', ...STATUS].map((s) => `<button data-v="${s}" class="${of.status === s ? 'on' : ''}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div>
+        <div class="seg" id="seg-pay">${[['all', 'Any payment'], ['submitted', 'To verify'], ['verified', 'Verified'], ['rejected', 'Rejected'], ['unpaid', 'Unpaid'], ['cash', 'Cash']].map(([k, l]) => `<button data-v="${k}" class="${of.payment === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      </div>
+      <div class="toolbar">
+        <input class="input search" id="q" placeholder="Search name, phone, booking no, address" value="${esc(of.q)}">
+        <select class="input" id="fsize"><option value="all">All sizes</option>${Object.keys(CFG.prices).map((k) => `<option value="${k}" ${of.size == k ? 'selected' : ''}>${Number(k).toLocaleString()} gal</option>`).join('')}</select>
+        <input class="input date-in" type="date" id="from" value="${of.from}" title="From">
+        <input class="input date-in" type="date" id="to" value="${of.to}" title="To">
+      </div>
+      <div class="box" id="list"><div class="empty">Loading…</div></div>`;
+    const load = async () => {
+      const p = new URLSearchParams(of);
+      const rows = await api('/admin/api/orders?' + p);
+      const tot = rows.filter((o) => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0);
+      $('#list').innerHTML = rows.length ? `<div class="thead"><span>Booking</span><span>Customer</span><span>Delivery</span><span>Payment</span><span>Status</span><span>Phone</span></div>${rows.map((o) => orderRow(o, true)).join('')}<div class="box-h" style="border-top:1px solid var(--line-2);border-bottom:0"><span class="muted">${rows.length} orders</span><b>${money(tot)}</b></div>` : '<div class="empty">No orders match these filters.</div>';
+      bindRows($('#list'));
+      $('#csv').href = '/admin/api/export.csv?' + p;
+    };
+    $$('#seg-status button').forEach((b) => b.onclick = () => { of.status = b.dataset.v; $$('#seg-status button').forEach((x) => x.classList.toggle('on', x === b)); load(); });
+    $$('#seg-pay button').forEach((b) => b.onclick = () => { of.payment = b.dataset.v; $$('#seg-pay button').forEach((x) => x.classList.toggle('on', x === b)); load(); });
+    let t; $('#q').oninput = (e) => { clearTimeout(t); t = setTimeout(() => { of.q = e.target.value; load(); }, 250); };
+    $('#fsize').onchange = (e) => { of.size = e.target.value; load(); };
+    $('#from').onchange = (e) => { of.from = e.target.value; load(); };
+    $('#to').onchange = (e) => { of.to = e.target.value; load(); };
+    $('#csv').onclick = (e) => { e.preventDefault(); location.href = $('#csv').href; };
+    load();
+  }
+
+  /* ---------- Order drawer ---------- */
+  async function openOrder(id) {
+    const o = await api('/admin/api/orders/' + id);
+    const d = $('#drawer');
+    const msgs = {
+      confirm: `Assalam o Alaikum ${o.name}, your ${CFG.business.name} booking ${o.code} is confirmed.\n${Number(o.size).toLocaleString()} gallons x ${o.qty}\n${dLabel(o.delivery_date)}, ${Pani.slotLabel(o.slot)}\n${o.address}, ${o.phase}\nThank you!`,
+      onway: `Hi ${o.name}, your ${CFG.business.name} tanker (${o.code}) is on the way and will reach you shortly.`,
+      reject: `Hi ${o.name}, we could not verify the payment for booking ${o.code}. Could you please send the transfer screenshot again?`,
+    };
+    const isPdf = /\.pdf$/i.test(o.receipt || '');
+    d.innerHTML = `
+      <div class="drawer-h"><div><b style="font-size:1.1rem">${esc(o.code)}</b><div class="muted" style="font-size:.85rem">Placed ${new Date(o.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · ${esc(o.source)}</div></div><button class="x" id="dx" aria-label="Close">×</button></div>
+      <div class="drawer-b">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${pill(o.payment_status)}${pill(o.status)}</div>
+        <dl class="kv">
+          <dt>Customer</dt><dd>${esc(o.name)}</dd>
+          <dt>Phone</dt><dd><a href="tel:${esc(o.phone)}" style="color:var(--blue)">${esc(o.phone)}</a></dd>
+          <dt>Tanker</dt><dd>${Number(o.size).toLocaleString()} gallons × ${o.qty}</dd>
+          <dt>Delivery</dt><dd>${relDay(o.delivery_date)} · ${Pani.slotLabel(o.slot)}</dd>
+          <dt>Address</dt><dd>${esc(o.address)}<br><span class="muted">${esc(o.phase)}${o.landmark ? ' · ' + esc(o.landmark) : ''}</span></dd>
+          ${o.notes ? `<dt>Notes</dt><dd>${esc(o.notes)}</dd>` : ''}
+          <dt>Total</dt><dd style="font-size:1.15rem">${money(o.total)}</dd>
+        </dl>
+        <div class="actions-row">
+          <a class="btn btn-wa" target="_blank" rel="noopener" href="${Pani.waLink(waNum(o.phone), msgs.confirm)}">${Pani.ICON.wa}Send confirmation</a>
+          <a class="btn btn-light" target="_blank" rel="noopener" href="${Pani.waLink(waNum(o.phone), msgs.onway)}">On the way msg</a>
+          <a class="btn btn-light" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address + ', ' + o.phase + ', Karachi')}">Map</a>
+        </div>
+        <div>
+          <div class="sub-h">Payment</div>
+          ${o.receipt ? `<div class="receipt">${isPdf ? '' : `<img src="/admin/receipt/${encodeURIComponent(o.receipt)}" alt="Payment screenshot" id="rimg">`}<a href="/admin/receipt/${encodeURIComponent(o.receipt)}" target="_blank">Open ${isPdf ? 'PDF receipt' : 'full screenshot'} ↗</a></div>` : `<p class="muted" style="font-size:.9rem">No screenshot (${esc(o.source)} order).</p>`}
+          <div class="actions-row" style="margin-top:10px">
+            <button class="btn btn-ok" data-pay="verified" ${o.payment_status === 'verified' ? 'disabled' : ''}>✓ Payment received</button>
+            <button class="btn btn-bad" data-pay="rejected" ${o.payment_status === 'rejected' ? 'disabled' : ''}>Not received</button>
+          </div>
+          <div class="actions-row" style="margin-top:8px">
+            <button class="btn btn-light" data-pay="cash" ${o.payment_status === 'cash' ? 'disabled' : ''}>Mark cash</button>
+            <button class="btn btn-light" data-pay="unpaid" ${o.payment_status === 'unpaid' ? 'disabled' : ''}>Mark unpaid</button>
+            ${o.payment_status === 'rejected' ? `<a class="btn btn-light" target="_blank" href="${Pani.waLink(waNum(o.phone), msgs.reject)}">Ask to resend</a>` : ''}
+          </div>
+        </div>
+        <div><div class="sub-h">Delivery status</div><div class="status-pick">${STATUS.map((s) => `<button data-st="${s}" class="${o.status === s ? 'on' : ''}">${s}</button>`).join('')}</div></div>
+        <div><div class="sub-h">Reschedule</div>
+          <div class="row2"><input type="date" class="input sm" id="rd" value="${o.delivery_date}"><select class="input sm" id="rs">${CFG.slots.map((s) => `<option value="${s}" ${s === o.slot ? 'selected' : ''}>${Pani.slotLabel(s)}</option>`).join('')}</select></div>
+          <button class="btn btn-light btn-sm" id="resched" style="margin-top:8px">Save new time</button>
+        </div>
+        <div><div class="sub-h">Internal note</div><textarea class="input" id="note" placeholder="Driver name, tanker number, anything useful">${esc(o.admin_note || '')}</textarea><button class="btn btn-light btn-sm" id="save-note" style="margin-top:8px">Save note</button></div>
+        <div><div class="sub-h">History</div><div class="log">${o.log.map((l) => `<div><b>${new Date(l.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</b> · ${esc(l.message)}</div>`).join('')}</div></div>
+      </div>`;
+    const patch = async (body, msg) => { await api('/admin/api/orders/' + o.id, { method: 'PATCH', body }); Pani.toast(msg); openOrder(o.id); route(); };
+    $$('[data-pay]', d).forEach((b) => b.onclick = () => {
+      const body = { payment_status: b.dataset.pay };
+      if (b.dataset.pay === 'verified' && o.status === 'pending') body.status = 'confirmed';
+      patch(body, b.dataset.pay === 'verified' ? 'Payment verified, order confirmed' : 'Payment updated');
+    });
+    $$('[data-st]', d).forEach((b) => b.onclick = () => { if (b.dataset.st === 'cancelled' && !confirm('Cancel this order? The slot will be freed.')) return; patch({ status: b.dataset.st }, 'Status updated'); });
+    $('#save-note', d).onclick = () => patch({ admin_note: $('#note', d).value }, 'Note saved');
+    $('#resched', d).onclick = () => patch({ delivery_date: $('#rd', d).value, slot: $('#rs', d).value }, 'Rescheduled');
+    $('#dx', d).onclick = closeDrawer;
+    const ri = $('#rimg', d); if (ri) ri.onclick = () => { $('#lightbox img').src = ri.src; $('#lightbox').classList.add('on'); };
+    d.classList.add('on'); $('#scrim').classList.add('on');
+  }
+  function closeDrawer() { $('#drawer').classList.remove('on'); $('#scrim').classList.remove('on'); }
+  $('#scrim').onclick = closeDrawer;
+  $('#lightbox').onclick = () => $('#lightbox').classList.remove('on');
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('#lightbox').classList.remove('on'); closeDrawer(); } });
+
+  /* ---------- Schedule ---------- */
+  let schedDate = null;
+  async function schedule() {
+    $('#title').textContent = 'Schedule';
+    schedDate = schedDate || Pani.addDays(today(), 1);
+    const v = $('#view');
+    v.innerHTML = `<div class="toolbar" style="align-items:center"><div class="day-nav"><button id="prev">‹</button><input type="date" class="input" id="sd" value="${schedDate}" style="width:170px"><button id="nxt">›</button></div><button class="btn btn-light btn-sm" id="tdy">Today</button><button class="btn btn-light btn-sm" id="tmr">Tomorrow</button></div><div class="box" id="sched"><div class="empty">Loading…</div></div>`;
+    const load = async () => {
+      const [rows, av] = await Promise.all([api(`/admin/api/orders?from=${schedDate}&to=${schedDate}`), api('/admin/api/availability?date=' + schedDate)]);
+      const live = rows.filter((o) => o.status !== 'cancelled');
+      const totalT = live.reduce((a, o) => a + o.qty, 0);
+      $('#sched').innerHTML = `<div class="box-h"><h2>${relDay(schedDate)} · ${Pani.dateLabel(schedDate, { weekday: 'long', day: 'numeric', month: 'long' })}</h2><span class="muted">${totalT} tankers · ${money(live.reduce((a, o) => a + o.total, 0))}</span></div>` +
+        CFG.slots.map((sl) => {
+          const os = live.filter((o) => o.slot === sl);
+          const used = os.reduce((a, o) => a + o.qty, 0);
+          const cap = CFG.slotCapacity;
+          return `<div class="sched-slot"><div class="sched-top"><b>${Pani.slotLabel(sl)}</b><div style="display:flex;align-items:center;gap:10px"><span class="muted" style="font-size:.85rem">${used}/${cap}</span><div class="cap ${used >= cap ? 'full' : ''}"><i style="width:${Math.min(100, used / cap * 100)}%"></i></div></div></div>
+            ${os.map((o) => `<div class="mini" data-id="${o.id}"><span><b>${esc(o.name)}</b> · ${esc(o.phase)} · ${Number(o.size).toLocaleString()}×${o.qty}</span><span>${pill(o.payment_status)}</span></div>`).join('') || '<div class="muted" style="font-size:.88rem">No bookings</div>'}</div>`;
+        }).join('');
+      bindRows($('#sched'));
+    };
+    const set = (d) => { schedDate = d; $('#sd').value = d; load(); };
+    $('#prev').onclick = () => set(Pani.addDays(schedDate, -1));
+    $('#nxt').onclick = () => set(Pani.addDays(schedDate, 1));
+    $('#tdy').onclick = () => set(today());
+    $('#tmr').onclick = () => set(Pani.addDays(today(), 1));
+    $('#sd').onchange = (e) => e.target.value && set(e.target.value);
+    load();
+  }
+
+  /* ---------- New order (phone / WhatsApp) ---------- */
+  function neworder() {
+    $('#title').textContent = 'New order';
+    const v = $('#view');
+    v.innerHTML = `<form class="box" id="nf" style="max-width:760px"><div class="box-h"><h2>Add a phone or WhatsApp order</h2></div><div class="box-b">
+      <p class="hint" style="margin-bottom:16px">Staff orders skip the ${CFG.minAdvanceHours} hour rule and slot limits, so you can squeeze in urgent deliveries.</p>
+      <div class="row2">
+        <div class="field" data-f="name"><label>Customer name</label><input class="input sm" name="name"><span class="msg"></span></div>
+        <div class="field" data-f="phone"><label>Mobile</label><input class="input sm" name="phone" type="tel"><span class="msg"></span></div>
+      </div>
+      <div class="row2">
+        <div class="field" data-f="phase"><label>DHA phase</label><select class="input sm" name="phase"><option value="">Select</option>${CFG.phases.map((p) => `<option>${esc(p)}</option>`).join('')}</select><span class="msg"></span></div>
+        <div class="field" data-f="address"><label>Address</label><input class="input sm" name="address"><span class="msg"></span></div>
+      </div>
+      <div class="row2">
+        <div class="field" data-f="size"><label>Tanker</label><select class="input sm" name="size">${Object.entries(CFG.prices).map(([k, p]) => `<option value="${k}">${Number(k).toLocaleString()} gal · ${money(p)}</option>`).join('')}</select><span class="msg"></span></div>
+        <div class="field"><label>Quantity</label><input class="input sm" name="qty" type="number" min="1" max="10" value="1"></div>
+      </div>
+      <div class="row2">
+        <div class="field" data-f="delivery_date"><label>Date</label><input class="input sm" name="delivery_date" type="date" value="${Pani.addDays(today(), 1)}"><span class="msg"></span></div>
+        <div class="field" data-f="slot"><label>Slot</label><select class="input sm" name="slot">${CFG.slots.map((s) => `<option value="${s}">${Pani.slotLabel(s)}</option>`).join('')}</select><span class="msg"></span></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Price per tanker <span>(leave blank for standard)</span></label><input class="input sm" name="unit_price" type="number" min="0" placeholder="Standard price"></div>
+        <div class="field"><label>Payment</label><select class="input sm" name="payment_status"><option value="unpaid">Unpaid</option><option value="verified">Paid (bank, verified)</option><option value="cash">Cash on delivery</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Source</label><select class="input sm" name="source"><option value="whatsapp">WhatsApp</option><option value="phone">Phone call</option><option value="walk-in">Walk-in</option></select></div>
+        <div class="field"><label>Notes <span>(optional)</span></label><input class="input sm" name="notes"></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:6px">Create order</button>
+    </div></form>`;
+    $('#nf').onsubmit = async (e) => {
+      e.preventDefault();
+      $$('#nf .field').forEach((f) => f.classList.remove('err'));
+      const body = Object.fromEntries(new FormData(e.target));
+      try { const r = await api('/admin/api/orders', { method: 'POST', body }); Pani.toast('Order ' + r.code + ' created'); location.hash = '#/orders'; setTimeout(() => openOrder(r.id), 300); }
+      catch (err) {
+        const f = (err.data && err.data.fields) || {};
+        Object.entries(f).forEach(([k, m]) => { const el = $(`#nf .field[data-f="${k}"]`); if (el) { el.classList.add('err'); el.querySelector('.msg').textContent = m; } });
+        if (!Object.keys(f).length) Pani.toast(err.message);
+      }
+    };
+  }
+
+  /* ---------- Settings ---------- */
+  function settings() {
+    $('#title').textContent = 'Settings';
+    const s = JSON.parse(JSON.stringify(CFG));
+    const v = $('#view');
+    const inp = (id, label, val, attrs = '', hint = '') => `<div class="field"><label for="${id}">${label}</label><input class="input sm" id="${id}" value="${esc(val)}" ${attrs}>${hint ? `<span class="hint">${hint}</span>` : ''}</div>`;
+    v.innerHTML = `<div class="set-grid">
+      <div class="box"><div class="box-h"><h2>Prices</h2></div><div class="box-b">
+        ${Object.keys(s.prices).map((k) => inp('pr-' + k, `${Number(k).toLocaleString()} gallon tanker (Rs)`, s.prices[k], 'type="number" min="1" inputmode="numeric"')).join('')}
+        <p class="hint">Changes show on the website immediately. Existing orders keep their old price.</p>
+      </div></div>
+      <div class="box"><div class="box-h"><h2>Bank transfer details</h2></div><div class="box-b">
+        ${inp('bk-name', 'Bank name', s.bank.bankName)}
+        ${inp('bk-title', 'Account title', s.bank.accountTitle)}
+        ${inp('bk-acc', 'Account number', s.bank.accountNumber)}
+        ${inp('bk-iban', 'IBAN', s.bank.iban)}
+        ${inp('bk-extra', 'Extra line (optional)', s.bank.extra, '', 'e.g. Easypaisa / JazzCash number')}
+      </div></div>
+      <div class="box"><div class="box-h"><h2>Business & contact</h2></div><div class="box-b">
+        ${inp('b-name', 'Business name', s.business.name)}
+        ${inp('b-phone', 'Phone number (shown on site)', s.business.phone)}
+        ${inp('b-wa', 'WhatsApp number', s.business.whatsapp, 'inputmode="numeric"', 'International format without +, e.g. 923001234567')}
+        ${inp('b-hours', 'Delivery hours text', s.business.deliveryHours)}
+      </div></div>
+      <div class="box"><div class="box-h"><h2>Offer banner</h2></div><div class="box-b">
+        ${inp('pm-text', 'Banner text', (s.promo || {}).text, 'maxlength="160"', 'Shown across the top of the website, e.g. a seasonal deal. Leave empty to hide it.')}
+        ${inp('pm-link', 'Banner link (optional)', (s.promo || {}).link, 'placeholder="#prices or https://…"')}
+      </div></div>
+      <div class="box"><div class="box-h"><h2>Booking rules</h2></div><div class="box-b">
+        <div class="row2">${inp('r-adv', 'Book at least (hours ahead)', s.minAdvanceHours, 'type="number" min="0" max="168"')}${inp('r-cap', 'Tankers per time slot', s.slotCapacity, 'type="number" min="1" max="100"')}</div>
+        ${inp('r-days', 'Open bookings for (days ahead)', s.maxDaysAhead, 'type="number" min="1" max="120"')}
+        <div class="field"><label>Time slots</label><div class="tags" id="slots-t"></div><div class="add-row"><input class="input sm" id="slot-a" type="time" style="flex:0 0 130px"><input class="input sm" id="slot-b" type="time" style="flex:0 0 130px"><button type="button" class="btn btn-light btn-sm" id="slot-add">Add</button></div></div>
+      </div></div>
+      <div class="box"><div class="box-h"><h2>Delivery areas</h2></div><div class="box-b">
+        <div class="tags" id="ph-t"></div><div class="add-row"><input class="input sm" id="ph-in" placeholder="e.g. DHA Phase 8 Ext"><button type="button" class="btn btn-light btn-sm" id="ph-add">Add</button></div>
+      </div></div>
+      <div class="box"><div class="box-h"><h2>Change password</h2></div><div class="box-b">
+        ${inp('pw-cur', 'Current password', '', 'type="password" autocomplete="current-password"')}
+        ${inp('pw-new', 'New password', '', 'type="password" autocomplete="new-password"', 'At least 8 characters')}
+        <button class="btn btn-light btn-sm" id="pw-save">Update password</button>
+      </div></div>
+    </div>
+    <div class="save-bar"><button class="btn btn-primary" id="save">Save settings</button></div>`;
+
+    const tags = (el, arr, fmt) => {
+      $(el).innerHTML = arr.map((x, i) => `<span class="tag-x">${esc(fmt ? fmt(x) : x)}<button type="button" data-i="${i}" aria-label="Remove">×</button></span>`).join('');
+      $$(el + ' button').forEach((b) => b.onclick = () => { arr.splice(+b.dataset.i, 1); tags(el, arr, fmt); });
+    };
+    s.slots.sort(); tags('#slots-t', s.slots, Pani.slotLabel); tags('#ph-t', s.phases);
+    $('#slot-add').onclick = () => {
+      const a = $('#slot-a').value, b = $('#slot-b').value;
+      if (!a || !b || a >= b) return Pani.toast('Pick a start and end time');
+      const sl = `${a}-${b}`; if (!s.slots.includes(sl)) { s.slots.push(sl); s.slots.sort(); } tags('#slots-t', s.slots, Pani.slotLabel);
+    };
+    $('#ph-add').onclick = () => { const p = $('#ph-in').value.trim(); if (p && !s.phases.includes(p)) { s.phases.push(p); tags('#ph-t', s.phases); $('#ph-in').value = ''; } };
+
+    $('#save').onclick = async () => {
+      const prices = {}; Object.keys(s.prices).forEach((k) => prices[k] = $('#pr-' + k).value);
+      const body = {
+        prices,
+        bank: { bankName: $('#bk-name').value, accountTitle: $('#bk-title').value, accountNumber: $('#bk-acc').value, iban: $('#bk-iban').value, extra: $('#bk-extra').value },
+        business: { ...s.business, name: $('#b-name').value, phone: $('#b-phone').value, whatsapp: $('#b-wa').value, deliveryHours: $('#b-hours').value },
+        promo: { text: $('#pm-text').value, link: $('#pm-link').value },
+        minAdvanceHours: $('#r-adv').value, slotCapacity: $('#r-cap').value, maxDaysAhead: $('#r-days').value,
+        slots: s.slots, phases: s.phases,
+      };
+      CFG = await api('/admin/api/settings', { method: 'PUT', body });
+      Pani.toast('Settings saved');
+    };
+    $('#pw-save').onclick = async () => {
+      try { await api('/admin/api/password', { method: 'POST', body: { current: $('#pw-cur').value, next: $('#pw-new').value } }); Pani.toast('Password updated'); $('#pw-cur').value = $('#pw-new').value = ''; }
+      catch (e) { Pani.toast(e.message); }
+    };
+  }
+
+  /* ---------- Boot ---------- */
+  api('/admin/api/me').then((r) => r.admin ? showApp() : showLogin()).catch(showLogin);
+  setInterval(() => { if ($('#app').style.display !== 'none') refreshBadge(); }, 60000);
+})();
+</script>
+</body>
+</html>

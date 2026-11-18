@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Track your booking · Pani</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2.5s10 10.4 10 17.5a10 10 0 1 1-20 0C6 12.9 16 2.5 16 2.5Z' fill='%230b5fa5'/%3E%3C/svg%3E">
+  <script>(function(){var t;try{t=localStorage.getItem('pani.theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}var d=document.documentElement;d.setAttribute('data-theme',t);d.classList.add('js')})()</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@500&text=%D9%BE%D8%A7%D9%86%DB%8C&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/style.css?v=18">
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav">
+    <a href="/" class="logo" data-logo aria-label="Pani home"></a>
+    <div class="nav-cta"><a class="btn btn-primary btn-sm" href="/book">Book a tanker</a></div>
+  </div>
+</header>
+<div class="page-hero">
+  <div class="container book-wrap">
+    <span class="eyebrow">Your booking</span>
+    <h1>Track your booking</h1>
+    <p>Enter your booking number and the mobile number you booked with.</p>
+  </div>
+</div>
+<main class="page" style="padding-top:0">
+  <div class="container book-wrap">
+    <form id="f" class="card" novalidate>
+      <div class="row2">
+        <div class="field"><label for="code">Booking number</label><input class="input" id="code" placeholder="PN-123456" autocapitalize="characters"></div>
+        <div class="field"><label for="phone">Mobile number</label><input class="input" id="phone" type="tel" inputmode="tel" placeholder="0300 1234567"></div>
+      </div>
+      <button class="btn btn-primary btn-block" id="go">Check status</button>
+      <p class="drop-err" id="err"></p>
+    </form>
+    <div id="result" style="margin-top:18px"></div>
+    <div class="alt-wa">Questions? <a data-wa href="#">Message us on WhatsApp</a></div>
+  </div>
+</main>
+<script src="/assets/app.js?v=18"></script>
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const p = new URLSearchParams(location.search);
+  if (p.get('code')) $('#code').value = p.get('code');
+  if (p.get('phone')) $('#phone').value = p.get('phone');
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  async function check(e) {
+    e && e.preventDefault();
+    $('#err').classList.remove('show');
+    const code = $('#code').value.trim(), phone = $('#phone').value.trim();
+    if (!code || !phone) { $('#err').textContent = 'Please enter both your booking number and mobile number.'; $('#err').classList.add('show'); return; }
+    $('#go').disabled = true;
+    try {
+      const r = await fetch(`/api/track?code=${encodeURIComponent(code)}&phone=${encodeURIComponent(phone)}`);
+      const d = await r.json();
+      if (!r.ok) { $('#err').textContent = d.error; $('#err').classList.add('show'); $('#result').innerHTML = ''; return; }
+      render(d);
+    } finally { $('#go').disabled = false; }
+  }
+
+  function render(d) {
+    const cancelled = d.status === 'cancelled';
+    const rejected = d.payment_status === 'rejected';
+    const order = ['pending', 'confirmed', 'dispatched', 'delivered'];
+    const idx = order.indexOf(d.status);
+    const steps = [
+      ['Booking received', 'We have your booking and payment screenshot.'],
+      ['Confirmed', d.payment_status === 'verified' ? 'Payment verified. Your slot is locked in.' : 'Waiting for payment verification.'],
+      ['On the way', 'The tanker has left and is heading to you.'],
+      ['Delivered', 'Water delivered. Thank you!'],
+    ];
+    const tl = cancelled || rejected
+      ? `<div class="note" style="background:var(--red-50);color:#8f1d16">${Pani.ICON.info}<span>${rejected ? 'We could not verify your payment. Please message us on WhatsApp with your booking number.' : 'This booking was cancelled. Message us on WhatsApp if you have questions.'}</span></div>`
+      : `<ul class="timeline">${steps.map((s, i) => `<li class="${i < idx || d.status === 'delivered' ? 'done' : i === idx ? 'now' : ''}"><div class="dot">${i < idx || d.status === 'delivered' ? Pani.ICON.check : ''}</div><div><b>${s[0]}</b><span>${s[1]}</span></div></li>`).join('')}</ul>`;
+    $('#result').innerHTML = `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b style="font-size:1.1rem">${esc(d.code)}</b><span class="muted" style="font-size:.9rem">Hi ${esc(d.name)}</span></div>
+      <div class="summary" style="margin:16px 0 0">
+        <div class="line"><span>Tanker</span><span>${Number(d.size).toLocaleString()} gallons × ${d.qty}</span></div>
+        <div class="line"><span>Delivery</span><span>${Pani.dateLabel(d.delivery_date, { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
+        <div class="line"><span>Time</span><span>${Pani.slotLabel(d.slot)}</span></div>
+        <div class="line"><span>Area</span><span>${esc(d.phase)}</span></div>
+        <div class="line total"><span>Total</span><span>${Pani.money(d.total)}</span></div>
+      </div>${tl}</div>`;
+  }
+  $('#f').addEventListener('submit', check);
+  if (p.get('code') && p.get('phone')) check();
+})();
+</script>
+</body>
+</html>
